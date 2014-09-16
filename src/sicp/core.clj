@@ -74,8 +74,8 @@
   [z]
   (z (fn [p q] q)))
 
-(print-rat (make-rat (car (conss 1 2))
-                     (cdr (conss 1 20))))
+;(print-rat (make-rat (car (conss 1 2))
+                     ;(cdr (conss 1 20))))
 
 (defn zero
   [f]
@@ -100,13 +100,13 @@
     (fn [x]
       ((m f) ((n f) x)))))
 
-(println ((one inc) 0))
-(println ((one inc) 0))
-(println ((two inc) 3))
-(println ((two inc) 7))
+;(println ((one inc) 0))
+;(println ((one inc) 0))
+;(println ((two inc) 3))
+;(println ((two inc) 7))
 
 (def three (add-church one two))
-(println ((three inc) 0))
+;(println ((three inc) 0))
 
 
 (defn tree-map
@@ -251,3 +251,78 @@
 
 (deriv '(+ x 3) 'x)
 
+; Representing Huffman trees
+
+(defn make-leaf
+  [sym weight]
+  (list 'leaf sym weight))
+
+(defn leaf?
+  [object]
+  (= (first object) 'leaf))
+
+(defn symbol-leaf 
+  [x]
+  (first (rest x)))
+
+(defn weight-leaf
+  [x]
+  (first (rest (rest x))))
+
+(defn symbols
+  [tree]
+  (if (leaf? tree)
+    (list (symbol-leaf tree))
+    (first (rest (rest tree)))))
+
+(defn weight
+  [tree]
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (first (rest (rest (rest tree))))))
+
+(defn make-code-tree
+  [left right]
+  (list left
+        right
+        (list (symbols left) (symbols right))
+        (+ (weight left) (weight right))))
+
+(defn left-branch
+  [tree]
+  (first tree))
+
+(defn right-branch
+  [tree]
+  (first (rest tree)))
+
+(defn choose-branch
+  [bit branch]
+  (cond
+    (= bit 0) (left-branch branch)
+    (= bit 1) (right-branch branch)
+    :else "bad bit"))
+
+(def sample-message '(0 1 1 0 0 1 0 1 0 1 1  1 0))
+
+(def sample-tree
+  (make-code-tree (make-leaf 'A 4)
+                  (make-code-tree (make-leaf 'B 2)
+                                  (make-code-tree (make-leaf 'D 1)
+                                                  (make-leaf 'C 1)))))
+
+(defn decode-1
+  [bits current-branch]
+  (if (and (list? bits) (empty? bits))
+    (list)
+    (let [next-branch
+          (choose-branch (first bits) current-branch)]
+      (if (leaf? next-branch)
+        (cons (symbol-leaf next-branch)
+              (decode-1 (rest bits) next-branch))))))
+
+(defn decode
+  [bits tree]
+  (decode-1 bits tree))
+
+(decode sample-message sample-tree)
